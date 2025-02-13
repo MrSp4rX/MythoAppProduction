@@ -13,6 +13,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false; // Added loading state
 
   Future<void> _login() async {
     final email = _emailController.text.trim();
@@ -22,6 +23,10 @@ class _LoginScreenState extends State<LoginScreen> {
       _showToast("Please fill all the fields");
       return;
     }
+
+    setState(() {
+      _isLoading = true; // Start loading
+    });
 
     try {
       final response = await http.post(
@@ -41,10 +46,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
           _showToast("Login Successful!");
 
-          // Navigate to Dashboard and clear all previous routes
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => DashboardScreen()),
-            (Route<dynamic> route) => false, // Removes all previous routes
+            (Route<dynamic> route) => false,
           );
         } else {
           _showToast("Error: Token is null");
@@ -55,6 +59,10 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       _showToast("Login failed. Check your connection.");
       print("Error: $e");
+    } finally {
+      setState(() {
+        _isLoading = false; // Stop loading
+      });
     }
   }
 
@@ -66,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async => false, // Disable back button
+      onWillPop: () async => false,
       child: Scaffold(
         backgroundColor: Colors.black,
         appBar: AppBar(
@@ -100,9 +108,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 TextField(
                   controller: _emailController,
+                  // enabled: !_isLoading,
                   style: TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: 'Email ID',
+                    labelText: 'Username or Email ID',
                     labelStyle: TextStyle(color: Colors.white70),
                     border: OutlineInputBorder(),
                     enabledBorder: OutlineInputBorder(
@@ -117,6 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(height: 8.0),
                 TextField(
                   controller: _passwordController,
+                  // enabled: !_isLoading,
                   style: TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Password',
@@ -131,12 +141,25 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   obscureText: true,
                 ),
-                SizedBox(height: 8.0),
+                SizedBox(height: 15.0),
+                _isLoading
+                    ? CircularProgressIndicator(color: Colors.blue)
+                    : ElevatedButton(
+                        onPressed: _login,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                        ),
+                        child: Text('Log In',
+                            style: TextStyle(
+                                fontSize: 16.0, fontWeight: FontWeight.bold)),
+                      ),
                 TextButton(
-                  onPressed: () {
-                    _showToast(
-                        "Forgot Password functionality not implemented yet.");
-                  },
+                  onPressed: !_isLoading
+                      ? () {
+                          _showToast(
+                              "Forgot Password functionality not implemented yet.");
+                        }
+                      : null,
                   child: Text(
                     'Forgot Password?',
                     style: TextStyle(
@@ -145,30 +168,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 8.0),
-                ElevatedButton(
-                  onPressed: _login,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                  ),
-                  child: Text('Log In',
-                      style: TextStyle(
-                          fontSize: 16.0, fontWeight: FontWeight.bold)),
-                ),
-                SizedBox(height: 8.0),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text("Don't have an account? ",
                         style: TextStyle(color: Colors.white)),
                     TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => SignupScreen()),
-                        );
-                      },
+                      onPressed: !_isLoading
+                          ? () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => SignupScreen()),
+                              );
+                            }
+                          : null,
                       child: Text(
                         'Sign up here',
                         style: TextStyle(

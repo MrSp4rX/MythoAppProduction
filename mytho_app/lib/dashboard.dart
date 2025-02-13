@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:http/http.dart' as http;
 
 class DashboardScreen extends StatefulWidget {
   @override
@@ -11,8 +10,20 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   String userName = "User";
   String userEmail = "Email";
+  TextEditingController searchController = TextEditingController();
 
   final List<Map<String, String>> popularNovels = [
+    {
+      "title": "Insta Millionaire",
+      "author": "Bug Poc",
+      "image": "assets/images/a.jpg"
+    },
+    {
+      "title": "Insta Empire",
+      "author": "Mirza",
+      "image": "assets/images/a.jpg"
+    },
+    {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
     {
       "title": "Insta Millionaire",
       "author": "Bug Poc",
@@ -51,18 +62,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final List<Map<String, String>> topPicks = [
     {"title": "The Return", "author": "Mirza", "image": "assets/images/a.jpg"},
     {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
-    {
-      "title": "Love, Lies & Lust",
-      "author": "Damon",
-      "image": "assets/images/a.jpg"
-    },
     {"title": "The Return", "author": "Mirza", "image": "assets/images/a.jpg"},
     {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
-    {
-      "title": "Love, Lies & Lust",
-      "author": "Damon",
-      "image": "assets/images/a.jpg"
-    },
+    {"title": "The Return", "author": "Mirza", "image": "assets/images/a.jpg"},
+    {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
+    {"title": "The Return", "author": "Mirza", "image": "assets/images/a.jpg"},
+    {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
     {"title": "The Return", "author": "Mirza", "image": "assets/images/a.jpg"},
     {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
     {
@@ -73,6 +78,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ];
 
   final List<Map<String, String>> favorites = [
+    {
+      "title": "Dark Secrets",
+      "author": "John Doe",
+      "image": "assets/images/a.jpg"
+    },
+    {
+      "title": "Lost in Time",
+      "author": "Jane Austen",
+      "image": "assets/images/a.jpg"
+    },
+    {
+      "title": "Mystic River",
+      "author": "Robert Frost",
+      "image": "assets/images/a.jpg"
+    },
     {
       "title": "Dark Secrets",
       "author": "John Doe",
@@ -142,6 +162,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  void _search() {
+    String searchText = searchController.text.trim();
+    if (searchText.isNotEmpty) {
+      print("Search Query: $searchText");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -151,7 +178,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: Colors.black,
         elevation: 0,
         title: Padding(
-          padding: EdgeInsets.only(top: 8.0), // Adjust top margin for title
+          padding: EdgeInsets.only(top: 8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -172,8 +199,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         actions: [
           Padding(
-            padding: EdgeInsets.only(
-                top: 8.0), // Adjust top margin for logout button
+            padding: EdgeInsets.only(top: 8.0),
             child: IconButton(
               icon: Icon(Icons.logout, color: Colors.pinkAccent),
               onPressed: _logout,
@@ -192,20 +218,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
               label: "Home",
               backgroundColor: Colors.black),
           BottomNavigationBarItem(
-              icon: Icon(Icons.edit),
-              label: "Write",
+              icon: Icon(Icons.store),
+              label: "Store",
               backgroundColor: Colors.black),
           BottomNavigationBarItem(
-              icon: Icon(Icons.search),
-              label: "Search",
+              icon: Icon(Icons.perm_contact_cal_sharp),
+              label: "Artists",
               backgroundColor: Colors.black),
           BottomNavigationBarItem(
-              icon: Icon(Icons.library_books),
+              icon: Icon(Icons.bookmark_add_outlined),
               label: "Library",
               backgroundColor: Colors.black),
           BottomNavigationBarItem(
-              icon: Icon(Icons.store),
-              label: "Store",
+              icon: Icon(Icons.person),
+              label: "Profile",
               backgroundColor: Colors.black),
         ],
       ),
@@ -221,13 +247,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               buildSection("Popular on Pocket Novels", popularNovels),
               buildSection("Top Picks for You", topPicks),
               buildSection("Favorites", favorites),
-              buildSection("Newly Released", favorites),
-              buildSection("Dark Romance", favorites),
-              buildSection("Action Story", favorites),
-              buildSection("Drama", favorites),
-              buildSection("Big Boss", favorites),
-              buildSection("90's Novals", favorites),
-              buildSection("Biography", favorites),
+              buildSection("Popular on Pocket Novels", popularNovels),
+              buildSection("Top Picks for You", topPicks),
+              buildSection("Favorites", favorites),
+              buildSection("Popular on Pocket Novels", popularNovels),
+              buildSection("Top Picks for You", topPicks),
+              buildSection("Favorites", favorites),
             ],
           ),
         ),
@@ -237,17 +262,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget buildSearchBar() {
     return TextField(
+      controller: searchController,
       style: TextStyle(color: Colors.white),
       decoration: InputDecoration(
         hintText: "Search",
         hintStyle: TextStyle(color: Colors.white70),
-        prefixIcon: Icon(Icons.search, color: Colors.white),
+        // prefixIcon: Icon(Icons.search, color: Colors.white),
+        suffixIcon: IconButton(
+          icon: Icon(Icons.search, color: Colors.pinkAccent),
+          onPressed: _search,
+        ),
         filled: true,
         fillColor: Colors.grey[900],
         border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide.none),
+          borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide.none,
+        ),
       ),
+      onSubmitted: (value) => _search(),
     );
   }
 
@@ -257,21 +289,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(title,
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold)),
-              Text("MORE",
-                  style: TextStyle(
-                      color: Colors.pinkAccent,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold)),
-            ],
-          ),
+          Text(title,
+              style: TextStyle(
+                  color: const Color.fromARGB(255, 219, 84, 5),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold)),
           SizedBox(height: 10),
           SizedBox(
             height: 182,

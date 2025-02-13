@@ -9,8 +9,11 @@ class OTPVerificationScreen extends StatefulWidget {
   final String password;
   final String username;
 
-  OTPVerificationScreen(
-      {required this.email, required this.password, required this.username});
+  OTPVerificationScreen({
+    required this.email,
+    required this.password,
+    required this.username,
+  });
 
   @override
   _OTPVerificationScreenState createState() => _OTPVerificationScreenState();
@@ -20,6 +23,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   final TextEditingController _otpController = TextEditingController();
   String? _serverOtp;
   bool _isLoading = false;
+  bool _isVerifying = false; // New state for verification loading
 
   Future<void> sendOtp() async {
     setState(() => _isLoading = true);
@@ -86,11 +90,17 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   }
 
   void _verifyOTP() async {
+    setState(() => _isVerifying = true); // Start loading
+
+    await Future.delayed(Duration(seconds: 2)); // Simulate network delay
+
     if (_otpController.text == _serverOtp) {
       _login();
     } else {
       _showToast("Invalid OTP! Please try again.");
     }
+
+    setState(() => _isVerifying = false); // Stop loading
   }
 
   void _showToast(String message) {
@@ -116,10 +126,28 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              "Enter the OTP sent to ${widget.email}",
-              style: TextStyle(fontSize: 18, color: Colors.white),
-              textAlign: TextAlign.center,
+            // Fixed: Email visibility issue
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Column(
+                children: [
+                  Text(
+                    "Enter the OTP sent to:",
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 5),
+                  SelectableText(
+                    widget.email,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.blueAccent,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
             SizedBox(height: 20),
             TextField(
@@ -139,15 +167,21 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
               ),
             ),
             SizedBox(height: 20),
+
+            // Verify OTP Button with Loading Effect
             ElevatedButton(
-              onPressed: _verifyOTP,
+              onPressed: _isVerifying ? null : _verifyOTP,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
               ),
-              child: Text("Verify OTP", style: TextStyle(fontSize: 16)),
+              child: _isVerifying
+                  ? CircularProgressIndicator(
+                      color: Colors.white) // Loading Spinner
+                  : Text("Verify OTP", style: TextStyle(fontSize: 16)),
             ),
+
             SizedBox(height: 10),
             TextButton(
               onPressed: _isLoading ? null : sendOtp,

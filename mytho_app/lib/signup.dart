@@ -14,6 +14,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _phoneNumberController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false; // Added loading state
 
   void _showToast(String message) {
     ScaffoldMessenger.of(context)
@@ -34,41 +35,53 @@ class _SignupScreenState extends State<SignupScreen> {
         confirmPassword.isEmpty) {
       _showToast("Please fill all the fields!");
       return;
-    } else {
-      if (password == confirmPassword) {
-        try {
-          final response = await http.post(
-            Uri.parse('https://mythoapp.netflixcity.shop/signup'),
-            headers: {"Content-Type": "application/json"},
-            body: jsonEncode({
-              "username": name,
-              "email": email,
-              "password": password,
-              "phone_number": phoneNumber,
-              "isVerified": false
-            }),
+    }
+
+    if (password != confirmPassword) {
+      _showToast("Passwords do not match!");
+      return;
+    }
+
+    setState(() {
+      _isLoading = true; // Start loading
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://mythoapp.netflixcity.shop/signup'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "username": name,
+          "email": email,
+          "password": password,
+          "phone_number": phoneNumber,
+          "isVerified": false
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        String? msg = responseData["message"];
+
+        if (msg == "User registered successfully") {
+          _showToast("SignUp Successful!");
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => OTPVerificationScreen(
+                    email: email, password: password, username: name)),
           );
-
-          if (response.statusCode == 200) {
-            final responseData = jsonDecode(response.body);
-            String? msg = responseData["message"];
-
-            if (msg == "User registered successfully") {
-              _showToast("SignUp Successful!");
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => OTPVerificationScreen(
-                        email: email, password: password, username: name)),
-              );
-            }
-          }
-        } catch (e) {
-          print("Error: $e");
         }
       } else {
-        _showToast("Passwords do not match!");
+        _showToast("Signup failed. Please try again.");
       }
+    } catch (e) {
+      _showToast("Error: Something went wrong.");
+      print("Error: $e");
+    } finally {
+      setState(() {
+        _isLoading = false; // Stop loading
+      });
     }
   }
 
@@ -105,6 +118,7 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
               TextField(
                 controller: _nameController,
+                // enabled: !_isLoading, // Disable input while loading
                 decoration: InputDecoration(
                   labelText: 'Username',
                   labelStyle: TextStyle(color: Colors.white70),
@@ -120,6 +134,7 @@ class _SignupScreenState extends State<SignupScreen> {
               SizedBox(height: 16.0),
               TextField(
                 controller: _emailController,
+                // enabled: !_isLoading,
                 decoration: InputDecoration(
                   labelText: 'Email ID',
                   labelStyle: TextStyle(color: Colors.white70),
@@ -136,6 +151,7 @@ class _SignupScreenState extends State<SignupScreen> {
               SizedBox(height: 16.0),
               TextField(
                 controller: _phoneNumberController,
+                // enabled: !_isLoading,
                 decoration: InputDecoration(
                   labelText: 'Phone Number',
                   labelStyle: TextStyle(color: Colors.white70),
@@ -152,6 +168,7 @@ class _SignupScreenState extends State<SignupScreen> {
               SizedBox(height: 16.0),
               TextField(
                 controller: _passwordController,
+                // enabled: !_isLoading,
                 decoration: InputDecoration(
                   labelText: 'Password',
                   labelStyle: TextStyle(color: Colors.white70),
@@ -168,6 +185,7 @@ class _SignupScreenState extends State<SignupScreen> {
               SizedBox(height: 16.0),
               TextField(
                 controller: _confirmPasswordController,
+                // enabled: !_isLoading,
                 decoration: InputDecoration(
                   labelText: 'Confirm Password',
                   labelStyle: TextStyle(color: Colors.white70),
@@ -182,15 +200,20 @@ class _SignupScreenState extends State<SignupScreen> {
                 style: TextStyle(color: Colors.white),
               ),
               SizedBox(height: 22.5),
-              ElevatedButton(
-                onPressed: _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                ),
-                child: Text('Sign Up',
-                    style:
-                        TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)),
-              ),
+
+              // Show loading spinner instead of signup button
+              _isLoading
+                  ? CircularProgressIndicator(color: Colors.blue)
+                  : ElevatedButton(
+                      onPressed: _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                      ),
+                      child: Text('Sign Up',
+                          style: TextStyle(
+                              fontSize: 16.0, fontWeight: FontWeight.bold)),
+                    ),
+
               SizedBox(height: 8.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -198,9 +221,11 @@ class _SignupScreenState extends State<SignupScreen> {
                   Text("Already have an account? ",
                       style: TextStyle(color: Colors.white)),
                   TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+                    onPressed: !_isLoading
+                        ? () {
+                            Navigator.pop(context);
+                          }
+                        : null,
                     child: Text(
                       'Login here',
                       style: TextStyle(color: Colors.blueAccent),
