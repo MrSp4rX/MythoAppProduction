@@ -24,9 +24,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
       "image": "assets/images/a.jpg"
     },
     {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
+    {
+      "title": "Insta Millionaire",
+      "author": "Bug Poc",
+      "image": "assets/images/a.jpg"
+    },
+    {
+      "title": "Insta Empire",
+      "author": "Mirza",
+      "image": "assets/images/a.jpg"
+    },
+    {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
+    {
+      "title": "Insta Millionaire",
+      "author": "Bug Poc",
+      "image": "assets/images/a.jpg"
+    },
+    {
+      "title": "Insta Empire",
+      "author": "Mirza",
+      "image": "assets/images/a.jpg"
+    },
+    {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
   ];
 
   final List<Map<String, String>> topPicks = [
+    {"title": "The Return", "author": "Mirza", "image": "assets/images/a.jpg"},
+    {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
+    {
+      "title": "Love, Lies & Lust",
+      "author": "Damon",
+      "image": "assets/images/a.jpg"
+    },
+    {"title": "The Return", "author": "Mirza", "image": "assets/images/a.jpg"},
+    {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
+    {
+      "title": "Love, Lies & Lust",
+      "author": "Damon",
+      "image": "assets/images/a.jpg"
+    },
     {"title": "The Return", "author": "Mirza", "image": "assets/images/a.jpg"},
     {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
     {
@@ -52,6 +88,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
       "author": "Robert Frost",
       "image": "assets/images/a.jpg"
     },
+    {
+      "title": "Dark Secrets",
+      "author": "John Doe",
+      "image": "assets/images/a.jpg"
+    },
+    {
+      "title": "Lost in Time",
+      "author": "Jane Austen",
+      "image": "assets/images/a.jpg"
+    },
+    {
+      "title": "Mystic River",
+      "author": "Robert Frost",
+      "image": "assets/images/a.jpg"
+    },
+    {
+      "title": "Dark Secrets",
+      "author": "John Doe",
+      "image": "assets/images/a.jpg"
+    },
+    {
+      "title": "Lost in Time",
+      "author": "Jane Austen",
+      "image": "assets/images/a.jpg"
+    },
+    {
+      "title": "Mystic River",
+      "author": "Robert Frost",
+      "image": "assets/images/a.jpg"
+    }
   ];
 
   @override
@@ -81,6 +147,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.black,
         elevation: 0,
         title: Padding(
@@ -154,6 +221,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               buildSection("Popular on Pocket Novels", popularNovels),
               buildSection("Top Picks for You", topPicks),
               buildSection("Favorites", favorites),
+              buildSection("Newly Released", favorites),
+              buildSection("Dark Romance", favorites),
+              buildSection("Action Story", favorites),
+              buildSection("Drama", favorites),
+              buildSection("Big Boss", favorites),
+              buildSection("90's Novals", favorites),
+              buildSection("Biography", favorites),
             ],
           ),
         ),
