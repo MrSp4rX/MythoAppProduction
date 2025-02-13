@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:mytho_app/test.dart';
+import 'package:mytho_app/dashboard.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -18,10 +18,9 @@ class OTPVerificationScreen extends StatefulWidget {
 
 class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   final TextEditingController _otpController = TextEditingController();
-  String? _serverOtp; // Stores OTP received from the server
+  String? _serverOtp;
   bool _isLoading = false;
 
-  // ✅ Function to send OTP request to the backend
   Future<void> sendOtp() async {
     setState(() => _isLoading = true);
 
@@ -37,30 +36,23 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       final data = jsonDecode(response.body);
       if (data['otp'] != null) {
         setState(() {
-          _serverOtp = data['otp'].toString(); // Store OTP for verification
+          _serverOtp = data['otp'].toString();
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("OTP sent successfully!")),
-        );
+        _showToast("OTP sent successfully!");
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to send OTP. Try again.")),
-        );
+        _showToast("Failed to send OTP. Try again.");
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: ${response.statusCode}")),
-      );
+      _showToast("Error: ${response.statusCode}");
     }
   }
 
   @override
   void initState() {
     super.initState();
-    sendOtp(); // Auto-send OTP when screen loads
+    sendOtp();
   }
 
-  // ✅ Function to login after OTP verification
   Future<void> _login() async {
     try {
       final response = await http.post(
@@ -79,7 +71,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           await prefs.setBool('isLoggedIn', true);
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => TestScreen()),
+            MaterialPageRoute(builder: (context) => DashboardScreen()),
           );
         } else {
           _showToast("Error: SignUp successful but can't log in!");
@@ -93,52 +85,75 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     }
   }
 
-  // ✅ Function to verify OTP
   void _verifyOTP() async {
     if (_otpController.text == _serverOtp) {
-      _login(); // ✅ Call _login() after OTP verification
+      _login();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Invalid OTP! Please try again.")),
-      );
+      _showToast("Invalid OTP! Please try again.");
     }
   }
 
   void _showToast(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.grey[900],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("OTP Verification")),
+      backgroundColor: Colors.black, // Dark theme
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: Text("OTP Verification", style: TextStyle(color: Colors.white)),
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("Enter the OTP sent to ${widget.email}",
-                style: TextStyle(fontSize: 18)),
+            Text(
+              "Enter the OTP sent to ${widget.email}",
+              style: TextStyle(fontSize: 18, color: Colors.white),
+              textAlign: TextAlign.center,
+            ),
             SizedBox(height: 20),
             TextField(
               controller: _otpController,
               keyboardType: TextInputType.number,
+              style: TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 labelText: "Enter OTP",
+                labelStyle: TextStyle(color: Colors.white70),
                 border: OutlineInputBorder(),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
               ),
             ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _verifyOTP,
-              child: Text("Verify OTP"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+              ),
+              child: Text("Verify OTP", style: TextStyle(fontSize: 16)),
             ),
             SizedBox(height: 10),
             TextButton(
-              onPressed: _isLoading ? null : sendOtp, // ✅ Enable Resend OTP
-              child:
-                  _isLoading ? CircularProgressIndicator() : Text("Resend OTP"),
+              onPressed: _isLoading ? null : sendOtp,
+              child: _isLoading
+                  ? CircularProgressIndicator(color: Colors.white)
+                  : Text("Resend OTP", style: TextStyle(color: Colors.blue)),
             ),
           ],
         ),

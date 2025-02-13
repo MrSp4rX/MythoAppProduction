@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mytho_app/test.dart';
-import 'login.dart';
+import 'package:mytho_app/dashboard.dart';
+import 'package:mytho_app/login.dart'; // Fixed import statement
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
@@ -17,7 +17,7 @@ Future<bool> checkLoginStatus() async {
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
 
-  MyApp({required this.isLoggedIn});
+  const MyApp({super.key, required this.isLoggedIn}); // Fixed constructor
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Mytho App',
       theme: ThemeData(primarySwatch: Colors.blue, fontFamily: 'Roboto'),
-      home: isLoggedIn ? TestScreen() : LoginScreen(),
+      home: isLoggedIn ? DashboardScreen() : LoginScreen(),
     );
   }
 }

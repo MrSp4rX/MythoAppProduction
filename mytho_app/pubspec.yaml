@@ -31,10 +31,8 @@ flutter:
           style: italic
         - asset: assets/fonts/RobotoMono-VariableFont_wght.ttf
           
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
-
+  assets:
+    - assets/images/
   # fonts:
   #   - family: Schyler
   #     fonts:
