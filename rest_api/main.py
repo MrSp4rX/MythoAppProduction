@@ -7,11 +7,16 @@ import uuid
 from functools import wraps
 import random
 from helper import send_otp
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'mysecretkey123'
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 
-client = MongoClient("mongodb+srv://sshourya948:SwatiLovesShaurya@otpbot.bfy6u.mongodb.net/")
+client = MongoClient(os.getenv("MONGO_URI"))
 db = client["mytho_app_database"]
 users_collection = db["users"]
 sessions_collection = db["sessions"]

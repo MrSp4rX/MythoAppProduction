@@ -1,9 +1,13 @@
 import sib_api_v3_sdk
 from sib_api_v3_sdk.rest import ApiException
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 def send_otp(email, otp):
     configuration = sib_api_v3_sdk.Configuration()
-    configuration.api_key['api-key'] = 'api_key'
+    configuration.api_key['api-key'] = os.getenv("SENDINBLUE_API_KEY")
     api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
     subject = "MythoApp Email Verification"
     html_content = """

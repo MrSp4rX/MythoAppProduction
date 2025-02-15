@@ -71,6 +71,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('auth_token');
+
+    if (token == null || token.isEmpty) {
+      print("Error: No auth token found.");
+      return;
+    }
+    final url = Uri.parse(
+        "https://f059-2409-40e3-18f-61b6-352e-4ed5-570f-6846.ngrok-free.app/logout");
+
+    try {
+      await http.post(url, headers: {"Authorization": "Bearer $token"});
+    } catch (e) {
+      print("Fetch error: $e");
+    }
     await prefs.clear();
     Navigator.pushReplacement(
       context,
