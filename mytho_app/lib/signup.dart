@@ -48,8 +48,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse(
-            'https://f059-2409-40e3-18f-61b6-352e-4ed5-570f-6846.ngrok-free.app/signup'),
+        Uri.parse('https://mythoapp.netflixcity.shop/signup'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "username": name,

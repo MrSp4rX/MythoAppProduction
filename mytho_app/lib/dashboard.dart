@@ -10,14 +10,13 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  String userName = "User";
+  String userName = "User ";
   String userEmail = "Email";
   TextEditingController searchController = TextEditingController();
 
-  List<Map<String, dynamic>> popularNovels = [];
-  List<Map<String, dynamic>> topPicks = [];
-  List<Map<String, dynamic>> favorites = [];
   List<Map<String, dynamic>> books = [];
+  int _selectedIndex =
+      0; // Track the selected index for the bottom navigation bar
 
   @override
   void initState() {
@@ -35,16 +34,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _fetchBooks() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? token =
-        prefs.getString('auth_token'); // ✅ Fix: Get token as String
+    final String? token = prefs.getString('auth_token');
 
     if (token == null || token.isEmpty) {
       print("Error: No auth token found.");
       return;
     }
 
-    final url = Uri.parse(
-        "https://f059-2409-40e3-18f-61b6-352e-4ed5-570f-6846.ngrok-free.app/getBooks");
+    final url = Uri.parse("https://mythoapp.netflixcity.shop/getBooks");
 
     try {
       final response =
@@ -52,7 +49,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
-
         if (data.containsKey('books') && data['books'] is List) {
           setState(() {
             books = List<Map<String, dynamic>>.from(data['books']);
@@ -77,14 +73,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       print("Error: No auth token found.");
       return;
     }
-    final url = Uri.parse(
-        "https://f059-2409-40e3-18f-61b6-352e-4ed5-570f-6846.ngrok-free.app/logout");
 
+    final url = Uri.parse("https://mythoapp.netflixcity.shop/logout");
     try {
       await http.post(url, headers: {"Authorization": "Bearer $token"});
     } catch (e) {
       print("Fetch error: $e");
     }
+
     await prefs.clear();
     Navigator.pushReplacement(
       context,
@@ -92,45 +88,82 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index; // Update the selected index
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
+    return WillPopScope(
+      onWillPop: () async => false, // Prevents going back
+      child: Scaffold(
         backgroundColor: Colors.black,
-        elevation: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Welcome, $userName",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold)),
-            Text(userEmail, style: TextStyle(color: Colors.grey, fontSize: 14)),
-          ],
-        ),
-        actions: [
-          IconButton(
-              icon: Icon(Icons.logout, color: Colors.pinkAccent),
-              onPressed: _logout),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          elevation: 0,
+          automaticallyImplyLeading: false, // Hides the back button
+          title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: buildSearchBar(),
-              ),
-              buildSection("Books", books),
-              // buildSection("Popular on Pocket Novels", popularNovels),
-              // buildSection("Top Picks for You", topPicks),
-              // buildSection("Favorites", favorites),
+              Text("Welcome, $userName",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold)),
+              Text(userEmail,
+                  style: TextStyle(color: Colors.grey, fontSize: 14)),
             ],
           ),
+          actions: [
+            IconButton(
+                icon: Icon(Icons.logout, color: Colors.pinkAccent),
+                onPressed: _logout),
+          ],
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: buildSearchBar(),
+                ),
+                buildSection("Books", books),
+              ],
+            ),
+          ),
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          backgroundColor: Colors.black,
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              backgroundColor: Colors.black,
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              backgroundColor: Colors.black,
+              icon: Icon(Icons.music_note),
+              label: 'Artist',
+            ),
+            BottomNavigationBarItem(
+              backgroundColor: Colors.black,
+              icon: Icon(Icons.bookmark),
+              label: 'Saved',
+            ),
+            BottomNavigationBarItem(
+              backgroundColor: Colors.black,
+              icon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: Colors.pinkAccent,
+          unselectedItemColor: Colors.white,
+          onTap: _onItemTapped,
         ),
       ),
     );
