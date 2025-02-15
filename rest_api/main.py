@@ -8,18 +8,16 @@ from functools import wraps
 import random
 from helper import send_otp
 
-# Flask App Initialization
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'mysecretkey123'
 
-# MongoDB Connection
 client = MongoClient("mongodb+srv://sshourya948:SwatiLovesShaurya@otpbot.bfy6u.mongodb.net/")
 db = client["mytho_app_database"]
 users_collection = db["users"]
 sessions_collection = db["sessions"]
 otp_collection = db["otp"]
+books_collection = db["novels"]
 
-# Helper function to create JWT Token
 def create_access_token(user_id):
     expiration = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
     jti = str(uuid.uuid4())
@@ -30,7 +28,6 @@ def create_access_token(user_id):
                                    upsert=True)
     return token
 
-# Authentication Middleware
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -46,7 +43,6 @@ def token_required(f):
         return f(user_id, *args, **kwargs)
     return decorated
 
-# Signup Route
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.json
@@ -65,7 +61,6 @@ def signup():
     users_collection.insert_one(new_user)
     return jsonify({"message": "User registered successfully"})
 
-# Login Route
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
@@ -76,14 +71,12 @@ def login():
         return jsonify({"access_token": token, "token_type": "bearer"})
     return jsonify({"detail": "Invalid credentials"}), 400
 
-# Logout Route
 @app.route('/logout', methods=['POST'])
 @token_required
 def logout(user_id):
     sessions_collection.delete_one({"user_id": user_id})
     return jsonify({"message": "Logged out successfully"})
 
-# Protected Route Example
 @app.route('/protected', methods=['GET'])
 @token_required
 def protected_route(user_id):
@@ -92,7 +85,6 @@ def protected_route(user_id):
         return jsonify({"message": "User not found"}), 404
     return jsonify({"message": f"Hello, {user['username']}! You are authenticated."})
 
-# Send OTP Route
 @app.route('/send-otp', methods=['POST'])
 def sendotp():
     data = request.json
@@ -107,5 +99,27 @@ def sendotp():
     send_otp(email, otp)
     return jsonify({"message": f"OTP sent to {email}", "otp": otp})
 
+
+@app.route('/getBooks', methods=['GET'])
+@token_required
+def get_books(user_id):
+    books = []
+    for book in books_collection.find():
+        books.append({
+            "title": book['title'],
+            "author": book['author'],
+            "description": book['description'],
+            "genres": book['genres'],
+            "cover_image": book['cover_image'],
+            "total_chapters": book['total_chapters'],
+            "status": book['status'],
+            "views": book['views'],
+            "ratings": book['ratings'],
+            "created_at": book['created_at']
+        })
+    print({"books": books})
+    return jsonify({"books": books})
+
+
 if __name__ == '__main__':
-    app.run(debug=False, use_reloader=False)
+    app.run(debug=True, use_reloader=True)

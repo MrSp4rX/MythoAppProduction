@@ -29,7 +29,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     setState(() => _isLoading = true);
 
     final response = await http.post(
-      Uri.parse('https://mythoapp.netflixcity.shop/send-otp'),
+      Uri.parse(
+          'https://f059-2409-40e3-18f-61b6-352e-4ed5-570f-6846.ngrok-free.app/send-otp'),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({"email": widget.email}),
     );
@@ -60,7 +61,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   Future<void> _login() async {
     try {
       final response = await http.post(
-        Uri.parse('https://mythoapp.netflixcity.shop/login'),
+        Uri.parse(
+            'https://f059-2409-40e3-18f-61b6-352e-4ed5-570f-6846.ngrok-free.app/login'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(
             {"username": widget.username, "password": widget.password}),
@@ -90,9 +92,9 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   }
 
   void _verifyOTP() async {
-    setState(() => _isVerifying = true); // Start loading
+    setState(() => _isVerifying = true);
 
-    await Future.delayed(Duration(seconds: 2)); // Simulate network delay
+    await Future.delayed(Duration(seconds: 2));
 
     if (_otpController.text == _serverOtp) {
       _login();
@@ -100,7 +102,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       _showToast("Invalid OTP! Please try again.");
     }
 
-    setState(() => _isVerifying = false); // Stop loading
+    setState(() => _isVerifying = false);
   }
 
   void _showToast(String message) {
@@ -115,7 +117,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // Dark theme
+      backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text("OTP Verification", style: TextStyle(color: Colors.white)),
@@ -126,7 +128,6 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Fixed: Email visibility issue
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Column(

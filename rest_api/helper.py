@@ -3,7 +3,7 @@ from sib_api_v3_sdk.rest import ApiException
 
 def send_otp(email, otp):
     configuration = sib_api_v3_sdk.Configuration()
-    configuration.api_key['api-key'] = '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'
+    configuration.api_key['api-key'] = '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'
     api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
     subject = "MythoApp Email Verification"
     html_content = """

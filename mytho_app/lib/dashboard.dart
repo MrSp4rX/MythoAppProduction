@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'login.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,138 +14,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String userEmail = "Email";
   TextEditingController searchController = TextEditingController();
 
-  final List<Map<String, String>> popularNovels = [
-    {
-      "title": "Insta Millionaire",
-      "author": "Bug Poc",
-      "image": "assets/images/a.jpg"
-    },
-    {
-      "title": "Insta Empire",
-      "author": "Mirza",
-      "image": "assets/images/a.jpg"
-    },
-    {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
-    {
-      "title": "Insta Millionaire",
-      "author": "Bug Poc",
-      "image": "assets/images/a.jpg"
-    },
-    {
-      "title": "Insta Empire",
-      "author": "Mirza",
-      "image": "assets/images/a.jpg"
-    },
-    {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
-    {
-      "title": "Insta Millionaire",
-      "author": "Bug Poc",
-      "image": "assets/images/a.jpg"
-    },
-    {
-      "title": "Insta Empire",
-      "author": "Mirza",
-      "image": "assets/images/a.jpg"
-    },
-    {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
-    {
-      "title": "Insta Millionaire",
-      "author": "Bug Poc",
-      "image": "assets/images/a.jpg"
-    },
-    {
-      "title": "Insta Empire",
-      "author": "Mirza",
-      "image": "assets/images/a.jpg"
-    },
-    {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
-  ];
-
-  final List<Map<String, String>> topPicks = [
-    {"title": "The Return", "author": "Mirza", "image": "assets/images/a.jpg"},
-    {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
-    {"title": "The Return", "author": "Mirza", "image": "assets/images/a.jpg"},
-    {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
-    {"title": "The Return", "author": "Mirza", "image": "assets/images/a.jpg"},
-    {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
-    {"title": "The Return", "author": "Mirza", "image": "assets/images/a.jpg"},
-    {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
-    {"title": "The Return", "author": "Mirza", "image": "assets/images/a.jpg"},
-    {"title": "Saving Nora", "author": "Mirza", "image": "assets/images/a.jpg"},
-    {
-      "title": "Love, Lies & Lust",
-      "author": "Damon",
-      "image": "assets/images/a.jpg"
-    },
-  ];
-
-  final List<Map<String, String>> favorites = [
-    {
-      "title": "Dark Secrets",
-      "author": "John Doe",
-      "image": "assets/images/a.jpg"
-    },
-    {
-      "title": "Lost in Time",
-      "author": "Jane Austen",
-      "image": "assets/images/a.jpg"
-    },
-    {
-      "title": "Mystic River",
-      "author": "Robert Frost",
-      "image": "assets/images/a.jpg"
-    },
-    {
-      "title": "Dark Secrets",
-      "author": "John Doe",
-      "image": "assets/images/a.jpg"
-    },
-    {
-      "title": "Lost in Time",
-      "author": "Jane Austen",
-      "image": "assets/images/a.jpg"
-    },
-    {
-      "title": "Mystic River",
-      "author": "Robert Frost",
-      "image": "assets/images/a.jpg"
-    },
-    {
-      "title": "Dark Secrets",
-      "author": "John Doe",
-      "image": "assets/images/a.jpg"
-    },
-    {
-      "title": "Lost in Time",
-      "author": "Jane Austen",
-      "image": "assets/images/a.jpg"
-    },
-    {
-      "title": "Mystic River",
-      "author": "Robert Frost",
-      "image": "assets/images/a.jpg"
-    },
-    {
-      "title": "Dark Secrets",
-      "author": "John Doe",
-      "image": "assets/images/a.jpg"
-    },
-    {
-      "title": "Lost in Time",
-      "author": "Jane Austen",
-      "image": "assets/images/a.jpg"
-    },
-    {
-      "title": "Mystic River",
-      "author": "Robert Frost",
-      "image": "assets/images/a.jpg"
-    }
-  ];
+  List<Map<String, dynamic>> popularNovels = [];
+  List<Map<String, dynamic>> topPicks = [];
+  List<Map<String, dynamic>> favorites = [];
+  List<Map<String, dynamic>> books = [];
 
   @override
   void initState() {
     super.initState();
     _loadUserInfo();
+    _fetchBooks();
   }
 
   Future<void> _loadUserInfo() async {
@@ -153,20 +33,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  Future<void> _fetchBooks() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token =
+        prefs.getString('auth_token'); // ✅ Fix: Get token as String
+
+    if (token == null || token.isEmpty) {
+      print("Error: No auth token found.");
+      return;
+    }
+
+    final url = Uri.parse(
+        "https://f059-2409-40e3-18f-61b6-352e-4ed5-570f-6846.ngrok-free.app/getBooks");
+
+    try {
+      final response =
+          await http.get(url, headers: {"Authorization": "Bearer $token"});
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+
+        if (data.containsKey('books') && data['books'] is List) {
+          setState(() {
+            books = List<Map<String, dynamic>>.from(data['books']);
+          });
+          print("Books fetched: ${books}");
+        } else {
+          print("Error: Invalid books data format.");
+        }
+      } else {
+        print("Error: ${response.statusCode}, ${response.body}");
+      }
+    } catch (e) {
+      print("Fetch error: $e");
+    }
+  }
+
   void _logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => LoginScreen()),
     );
-  }
-
-  void _search() {
-    String searchText = searchController.text.trim();
-    if (searchText.isNotEmpty) {
-      print("Search Query: $searchText");
-    }
   }
 
   @override
@@ -174,65 +83,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         backgroundColor: Colors.black,
         elevation: 0,
-        title: Padding(
-          padding: EdgeInsets.only(top: 8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Welcome, $userName",
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Welcome, $userName",
                 style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                userEmail,
-                style: TextStyle(color: Colors.grey, fontSize: 14),
-              ),
-            ],
-          ),
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold)),
+            Text(userEmail, style: TextStyle(color: Colors.grey, fontSize: 14)),
+          ],
         ),
         actions: [
-          Padding(
-            padding: EdgeInsets.only(top: 8.0),
-            child: IconButton(
+          IconButton(
               icon: Icon(Icons.logout, color: Colors.pinkAccent),
-              onPressed: _logout,
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.shifting,
-        backgroundColor: Colors.black,
-        selectedItemColor: Colors.pinkAccent,
-        unselectedItemColor: Colors.grey,
-        items: [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: "Home",
-              backgroundColor: Colors.black),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.store),
-              label: "Store",
-              backgroundColor: Colors.black),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.perm_contact_cal_sharp),
-              label: "Artists",
-              backgroundColor: Colors.black),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.bookmark_add_outlined),
-              label: "Library",
-              backgroundColor: Colors.black),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: "Profile",
-              backgroundColor: Colors.black),
+              onPressed: _logout),
         ],
       ),
       body: SafeArea(
@@ -244,15 +111,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 padding: const EdgeInsets.all(8.0),
                 child: buildSearchBar(),
               ),
-              buildSection("Popular on Pocket Novels", popularNovels),
-              buildSection("Top Picks for You", topPicks),
-              buildSection("Favorites", favorites),
-              buildSection("Popular on Pocket Novels", popularNovels),
-              buildSection("Top Picks for You", topPicks),
-              buildSection("Favorites", favorites),
-              buildSection("Popular on Pocket Novels", popularNovels),
-              buildSection("Top Picks for You", topPicks),
-              buildSection("Favorites", favorites),
+              buildSection("Books", books),
+              // buildSection("Popular on Pocket Novels", popularNovels),
+              // buildSection("Top Picks for You", topPicks),
+              // buildSection("Favorites", favorites),
             ],
           ),
         ),
@@ -267,50 +129,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
       decoration: InputDecoration(
         hintText: "Search",
         hintStyle: TextStyle(color: Colors.white70),
-        // prefixIcon: Icon(Icons.search, color: Colors.white),
         suffixIcon: IconButton(
-          icon: Icon(Icons.search, color: Colors.pinkAccent),
-          onPressed: _search,
-        ),
+            icon: Icon(Icons.search, color: Colors.pinkAccent),
+            onPressed: () {}),
         filled: true,
         fillColor: Colors.grey[900],
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide.none,
-        ),
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none),
       ),
-      onSubmitted: (value) => _search(),
     );
   }
 
-  Widget buildSection(String title, List<Map<String, String>> books) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title,
-              style: TextStyle(
-                  color: const Color.fromARGB(255, 219, 84, 5),
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold)),
-          SizedBox(height: 10),
-          SizedBox(
-            height: 182,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: books.length,
-              itemBuilder: (context, index) {
-                return buildBookCard(books[index]);
-              },
+  Widget buildSection(String title, List<Map<String, dynamic>> books) {
+    return books.isEmpty
+        ? Center(child: CircularProgressIndicator())
+        : Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: TextStyle(
+                        color: Colors.orange,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold)),
+                SizedBox(height: 10),
+                SizedBox(
+                  height: 182,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: books.length,
+                    itemBuilder: (context, index) {
+                      return buildBookCard(books[index]);
+                    },
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
-    );
+          );
   }
 
-  Widget buildBookCard(Map<String, String> book) {
+  Widget buildBookCard(Map<String, dynamic> book) {
     return Container(
       width: 120,
       margin: EdgeInsets.only(right: 10),
@@ -319,25 +179,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.asset(
-              book["image"]!,
-              width: 120,
-              height: 150,
-              fit: BoxFit.cover,
-            ),
+            child: book["cover_image"] != null
+                ? Image.network(book["cover_image"],
+                    width: 120, height: 150, fit: BoxFit.cover)
+                : Container(
+                    width: 120,
+                    height: 150,
+                    color: Colors.grey[800],
+                    child: Icon(Icons.book, color: Colors.white70, size: 50),
+                  ),
           ),
           SizedBox(height: 5),
-          SizedBox(
-            width: 120,
-            child: Text(
-              book["title"]!,
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
+          Text(
+            book["title"] ?? "Unknown",
+            style: TextStyle(
+                color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

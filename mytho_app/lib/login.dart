@@ -30,7 +30,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://mythoapp.netflixcity.shop/login'),
+        Uri.parse(
+            'https://f059-2409-40e3-18f-61b6-352e-4ed5-570f-6846.ngrok-free.app/login'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"username": email, "password": password}),
       );

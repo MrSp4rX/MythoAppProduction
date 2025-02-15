@@ -48,7 +48,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://mythoapp.netflixcity.shop/signup'),
+        Uri.parse(
+            'https://f059-2409-40e3-18f-61b6-352e-4ed5-570f-6846.ngrok-free.app/signup'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "username": name,
@@ -80,7 +81,7 @@ class _SignupScreenState extends State<SignupScreen> {
       print("Error: $e");
     } finally {
       setState(() {
-        _isLoading = false; // Stop loading
+        _isLoading = false;
       });
     }
   }
@@ -118,7 +119,6 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
               TextField(
                 controller: _nameController,
-                // enabled: !_isLoading, // Disable input while loading
                 decoration: InputDecoration(
                   labelText: 'Username',
                   labelStyle: TextStyle(color: Colors.white70),
@@ -134,7 +134,6 @@ class _SignupScreenState extends State<SignupScreen> {
               SizedBox(height: 16.0),
               TextField(
                 controller: _emailController,
-                // enabled: !_isLoading,
                 decoration: InputDecoration(
                   labelText: 'Email ID',
                   labelStyle: TextStyle(color: Colors.white70),
