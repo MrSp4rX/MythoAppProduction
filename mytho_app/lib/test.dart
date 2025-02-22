@@ -1,87 +1,40 @@
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'login.dart';
+import 'package:mongo_dart/mongo_dart.dart';
 
-class TestScreen extends StatefulWidget {
-  @override
-  _TestScreenState createState() => _TestScreenState();
-}
+void main() async {
+  String mongoUri =
+      "mongodb+srv://sshourya948:SwatiLovesShaurya@otpbot.bfy6u.mongodb.net/mytho_app_database";
 
-class _TestScreenState extends State<TestScreen> {
-  String displayText = "Hello, Flutter!";
-  String userName = "User";
-  String userEmail = "Email";
+  try {
+    print("🔄 Connecting to MongoDB...");
+    var db = await Db.create(mongoUri);
+    await db.open();
 
-  @override
-  void initState() {
-    super.initState();
-    _loadUserInfo();
-  }
+    print("✅ Connected Successfully!");
 
-  // ✅ Load user info from SharedPreferences
-  Future<void> _loadUserInfo() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      userName = prefs.getString('userName') ?? "Unknown User";
-      userEmail = prefs.getString('userEmail') ?? "No Email";
-    });
-  }
+    var collections = await db.getCollectionNames();
+    print("📁 Collections: $collections");
 
-  // ✅ Logout function
-  Future<void> _logout() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Clear all user data
+    var usersCollection = db.collection("users");
 
-    // ✅ Navigate back to Login Screen
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => LoginScreen()),
-    );
-  }
+    // If users collection does not exist, insert a test user
+    if (!collections.contains("users")) {
+      print("⚠️ 'users' collection not found. Creating one now...");
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Test Screen"),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: _logout, // ✅ Logout when clicked
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Welcome, $userName",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              userEmail,
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-            SizedBox(height: 20),
-            Text(displayText, style: TextStyle(fontSize: 20)),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  displayText = "Button Clicked!";
-                });
-              },
-              child: Text("Click Me"),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _logout,
-              child: Text("Logout"),
-            ),
-          ],
-        ),
-      ),
-    );
+      await usersCollection.insertOne({
+        "username": "testuser",
+        "email": "test@example.com",
+        "password": "password123",
+      });
+
+      print("✅ Test user added!");
+    }
+
+    var users = await usersCollection.find().toList();
+    print("👥 Users Found: $users");
+
+    await db.close();
+    print("🔒 Connection Closed.");
+  } catch (e) {
+    print("❌ Error Connecting to MongoDB: $e");
   }
 }

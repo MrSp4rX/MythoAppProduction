@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mytho_app/signup.dart';
+import 'package:mytho_app/mongo_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dashboard.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'signup.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -13,7 +12,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false; // Added loading state
+  bool _isLoading = false;
+  final MongoService _mongoService = MongoService();
 
   Future<void> _login() async {
     final email = _emailController.text.trim();
@@ -24,46 +24,25 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    setState(() {
-      _isLoading = true; // Start loading
-    });
+    setState(() => _isLoading = true);
 
-    try {
-      final response = await http.post(
-        Uri.parse('https://mythoapp.netflixcity.shop/login'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"username": email, "password": password}),
+    final response = await _mongoService.login(email, password);
+    print("\n\nEmail: $email, Password: $password");
+    print(response);
+
+    if (response != null && response.containsKey('access_token')) {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', response['access_token']);
+      await prefs.setBool('isLoggedIn', true);
+      _showToast("Login Successful!");
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => DashboardScreen()),
       );
-
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        String? token = responseData["access_token"];
-
-        if (token != null) {
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setString('auth_token', token);
-          await prefs.setBool('isLoggedIn', true);
-
-          _showToast("Login Successful!");
-
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => DashboardScreen()),
-            (Route<dynamic> route) => false,
-          );
-        } else {
-          _showToast("Error: Token is null");
-        }
-      } else {
-        _showToast("Invalid Credentials!");
-      }
-    } catch (e) {
-      _showToast("Login failed. Check your connection.");
-      print("Error: $e");
-    } finally {
-      setState(() {
-        _isLoading = false; // Stop loading
-      });
+    } else {
+      _showToast(response?['error'] ?? "Invalid Credentials!");
     }
+
+    setState(() => _isLoading = false);
   }
 
   void _showToast(String message) {
@@ -80,13 +59,11 @@ class _LoginScreenState extends State<LoginScreen> {
         appBar: AppBar(
           automaticallyImplyLeading: false,
           backgroundColor: Colors.black,
-          title: Text(
-            'Mytho App',
-            style: TextStyle(
-                color: Colors.white,
-                fontSize: 24.0,
-                fontWeight: FontWeight.bold),
-          ),
+          title: Text('Mytho App',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24.0,
+                  fontWeight: FontWeight.bold)),
         ),
         body: Center(
           child: Padding(
@@ -94,24 +71,18 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  margin: EdgeInsets.all(10.0),
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
-                    "Login",
+                Text("Login",
                     style: TextStyle(
                       fontSize: 24.0,
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                    )),
+                SizedBox(height: 8.0),
                 TextField(
                   controller: _emailController,
-                  // enabled: !_isLoading,
                   style: TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: 'Username or Email ID',
+                    labelText: 'Username or Email',
                     labelStyle: TextStyle(color: Colors.white70),
                     border: OutlineInputBorder(),
                     enabledBorder: OutlineInputBorder(
@@ -121,12 +92,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderSide: BorderSide(color: Colors.blue),
                     ),
                   ),
-                  keyboardType: TextInputType.emailAddress,
                 ),
                 SizedBox(height: 8.0),
                 TextField(
                   controller: _passwordController,
-                  // enabled: !_isLoading,
                   style: TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Password',

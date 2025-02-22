@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mytho_app/dashboard.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:mytho_app/mongo_service.dart';
+import 'dart:math';
 
 class OTPVerificationScreen extends StatefulWidget {
   final String email;
@@ -21,33 +21,45 @@ class OTPVerificationScreen extends StatefulWidget {
 
 class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   final TextEditingController _otpController = TextEditingController();
-  String? _serverOtp;
   bool _isLoading = false;
-  bool _isVerifying = false; // New state for verification loading
+  bool _isVerifying = false;
+  String? _serverOtp;
+  final MongoService _mongoService = MongoService();
+
+  String _generateOtp() {
+    final Random random = Random();
+    return (100000 + random.nextInt(900000)).toString();
+  }
 
   Future<void> sendOtp() async {
     setState(() => _isLoading = true);
+    String generatedOtp = _generateOtp();
 
-    final response = await http.post(
-      Uri.parse('https://mythoapp.netflixcity.shop/send-otp'),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"email": widget.email}),
-    );
+    try {
+      var result = await _mongoService.otpCollection.insertOne({
+        'email': widget.email,
+        'otp': generatedOtp,
+        'expires_at':
+            DateTime.now().add(Duration(minutes: 5)).toIso8601String(),
+      });
 
-    setState(() => _isLoading = false);
+      if (result.isSuccess) {
+        print("Generated OTP: $generatedOtp");
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['otp'] != null) {
+        // TODO: Send OTP via Email/SMS (integrate service here)
+
         setState(() {
-          _serverOtp = data['otp'].toString();
+          _serverOtp = generatedOtp;
         });
         _showToast("OTP sent successfully!");
       } else {
-        _showToast("Failed to send OTP. Try again.");
+        _showToast("Failed to generate OTP. Try again.");
       }
-    } else {
-      _showToast("Error: ${response.statusCode}");
+    } catch (e) {
+      print("Error sending OTP: $e");
+      _showToast("Error: Unable to send OTP.");
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -58,48 +70,29 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   }
 
   Future<void> _login() async {
-    try {
-      final response = await http.post(
-        Uri.parse('https://mythoapp.netflixcity.shop/login'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(
-            {"username": widget.username, "password": widget.password}),
+    final response =
+        await _mongoService.login(widget.username, widget.password);
+    if (response != null && response['access_token'] != null) {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', response['access_token']);
+      await prefs.setBool('isLoggedIn', true);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => DashboardScreen()),
       );
-
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        String? token = responseData["access_token"];
-        if (token != null) {
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setString('auth_token', token);
-          await prefs.setBool('isLoggedIn', true);
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => DashboardScreen()),
-          );
-        } else {
-          _showToast("Error: SignUp successful but can't log in!");
-        }
-      } else {
-        _showToast("Login failed. Invalid credentials.");
-      }
-    } catch (e) {
-      _showToast("Login failed. Check your connection.");
-      print("Error: $e");
+    } else {
+      _showToast("Login failed. Invalid credentials.");
     }
   }
 
   void _verifyOTP() async {
     setState(() => _isVerifying = true);
-
     await Future.delayed(Duration(seconds: 2));
-
     if (_otpController.text == _serverOtp) {
       _login();
     } else {
       _showToast("Invalid OTP! Please try again.");
     }
-
     setState(() => _isVerifying = false);
   }
 
@@ -166,8 +159,6 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
               ),
             ),
             SizedBox(height: 20),
-
-            // Verify OTP Button with Loading Effect
             ElevatedButton(
               onPressed: _isVerifying ? null : _verifyOTP,
               style: ElevatedButton.styleFrom(
@@ -176,11 +167,9 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
               ),
               child: _isVerifying
-                  ? CircularProgressIndicator(
-                      color: Colors.white) // Loading Spinner
+                  ? CircularProgressIndicator(color: Colors.white)
                   : Text("Verify OTP", style: TextStyle(fontSize: 16)),
             ),
-
             SizedBox(height: 10),
             TextButton(
               onPressed: _isLoading ? null : sendOtp,
