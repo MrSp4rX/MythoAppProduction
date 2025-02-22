@@ -65,116 +65,119 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async => false,
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
+        onWillPop: () async => false,
+        child: Scaffold(
           backgroundColor: Colors.black,
-          title: const Text(
-            'Mytho App',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24.0,
-              fontWeight: FontWeight.bold,
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            backgroundColor: Colors.black,
+            title: const Text(
+              'Mytho App',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24.0,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-        ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 40.0),
-                const Text(
-                  "Login",
-                  style: TextStyle(
-                    fontSize: 26.0,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12.0),
-                TextField(
-                  controller: _emailController,
-                  style: const TextStyle(color: Colors.white),
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  decoration: _inputDecoration('Username or Email'),
-                ),
-                const SizedBox(height: 12.0),
-                TextField(
-                  controller: _passwordController,
-                  style: const TextStyle(color: Colors.white),
-                  obscureText: true,
-                  textInputAction: TextInputAction.done,
-                  decoration: _inputDecoration('Password'),
-                ),
-                const SizedBox(height: 20.0),
-                _isLoading
-                    ? const CircularProgressIndicator(color: Colors.blue)
-                    : SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _login,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            padding: const EdgeInsets.symmetric(vertical: 12.0),
-                          ),
-                          child: const Text(
-                            'Log In',
-                            style: TextStyle(
-                                fontSize: 16.0, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                TextButton(
-                  onPressed: !_isLoading
-                      ? () => _showToast(
-                          "Forgot Password functionality not implemented yet.")
-                      : null,
-                  child: const Text(
-                    'Forgot Password?',
-                    style: TextStyle(
-                      color: Colors.blue,
-                      fontSize: 14.0,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10.0),
-                Row(
+          body: SingleChildScrollView(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("Don't have an account? ",
-                        style: TextStyle(color: Colors.white)),
+                    const SizedBox(height: 40.0),
+                    const Text(
+                      "Login",
+                      style: TextStyle(
+                        fontSize: 26.0,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12.0),
+                    TextField(
+                      controller: _emailController,
+                      style: const TextStyle(color: Colors.white),
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      decoration: _inputDecoration('Username or Email'),
+                    ),
+                    const SizedBox(height: 12.0),
+                    TextField(
+                      controller: _passwordController,
+                      style: const TextStyle(color: Colors.white),
+                      obscureText: true,
+                      textInputAction: TextInputAction.done,
+                      decoration: _inputDecoration('Password'),
+                    ),
+                    const SizedBox(height: 20.0),
+                    _isLoading
+                        ? const CircularProgressIndicator(color: Colors.blue)
+                        : SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _login,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12.0),
+                              ),
+                              child: const Text(
+                                'Log In',
+                                style: TextStyle(
+                                    fontSize: 16.0,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
                     TextButton(
                       onPressed: !_isLoading
-                          ? () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => SignupScreen()),
-                              );
-                            }
+                          ? () => _showToast(
+                              "Forgot Password functionality not implemented yet.")
                           : null,
                       child: const Text(
-                        'Sign up here',
+                        'Forgot Password?',
                         style: TextStyle(
                           color: Colors.blue,
                           fontSize: 14.0,
                         ),
                       ),
                     ),
+                    const SizedBox(height: 10.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text("Don't have an account? ",
+                            style: TextStyle(color: Colors.white)),
+                        TextButton(
+                          onPressed: !_isLoading
+                              ? () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => SignupScreen()),
+                                  );
+                                }
+                              : null,
+                          child: const Text(
+                            'Sign up here',
+                            style: TextStyle(
+                              color: Colors.blue,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 30.0),
                   ],
                 ),
-                const SizedBox(height: 30.0),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 
   InputDecoration _inputDecoration(String label) {

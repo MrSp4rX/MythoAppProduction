@@ -109,11 +109,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
         bottomNavigationBar: BottomNavigationBar(
           backgroundColor: Colors.black,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(
-                icon: Icon(Icons.music_note), label: 'Artist'),
-            BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: 'Saved'),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+              icon: Icon(Icons.home),
+              label: 'Home',
+              backgroundColor: Colors.black,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.music_note),
+              label: 'Artist',
+              backgroundColor: Colors.black,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bookmark),
+              label: 'Saved',
+              backgroundColor: Colors.black,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+              backgroundColor: Colors.black,
+            ),
           ],
           currentIndex: _selectedIndex,
           selectedItemColor: Colors.pinkAccent,
