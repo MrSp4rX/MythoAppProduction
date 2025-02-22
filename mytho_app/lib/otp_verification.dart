@@ -5,38 +5,39 @@ import 'package:mytho_app/mongo_service.dart';
 import 'dart:math';
 
 class OTPVerificationScreen extends StatefulWidget {
-  final String email;
-  final String password;
-  final String username;
+  final String email, password, username;
 
-  OTPVerificationScreen({
+  const OTPVerificationScreen({
     required this.email,
     required this.password,
     required this.username,
-  });
+    Key? key,
+  }) : super(key: key);
 
   @override
   _OTPVerificationScreenState createState() => _OTPVerificationScreenState();
 }
 
 class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
-  final TextEditingController _otpController = TextEditingController();
-  bool _isLoading = false;
-  bool _isVerifying = false;
+  final _otpController = TextEditingController();
+  bool _isLoading = false, _isVerifying = false;
   String? _serverOtp;
-  final MongoService _mongoService = MongoService();
+  final _mongoService = MongoService();
 
-  String _generateOtp() {
-    final Random random = Random();
-    return (100000 + random.nextInt(900000)).toString();
+  @override
+  void initState() {
+    super.initState();
+    _sendOtp();
   }
 
-  Future<void> sendOtp() async {
-    setState(() => _isLoading = true);
-    String generatedOtp = _generateOtp();
+  String _generateOtp() => (100000 + Random().nextInt(900000)).toString();
 
+  Future<void> _sendOtp() async {
+    setState(() => _isLoading = true);
+
+    final generatedOtp = _generateOtp();
     try {
-      var result = await _mongoService.otpCollection.insertOne({
+      final result = await _mongoService.otpCollection.insertOne({
         'email': widget.email,
         'otp': generatedOtp,
         'expires_at':
@@ -44,56 +45,55 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       });
 
       if (result.isSuccess) {
-        print("Generated OTP: $generatedOtp");
-
-        // TODO: Send OTP via Email/SMS (integrate service here)
-
-        setState(() {
-          _serverOtp = generatedOtp;
-        });
+        print("Generated OTP: $generatedOtp"); // Remove in production
+        setState(() => _serverOtp = generatedOtp);
         _showToast("OTP sent successfully!");
       } else {
-        _showToast("Failed to generate OTP. Try again.");
+        _showToast("Failed to send OTP. Try again.");
       }
     } catch (e) {
-      print("Error sending OTP: $e");
       _showToast("Error: Unable to send OTP.");
+      print("Error: $e");
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    sendOtp();
-  }
-
-  Future<void> _login() async {
-    final response =
-        await _mongoService.login(widget.username, widget.password);
-    if (response != null && response['access_token'] != null) {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', response['access_token']);
-      await prefs.setBool('isLoggedIn', true);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => DashboardScreen()),
-      );
-    } else {
-      _showToast("Login failed. Invalid credentials.");
+  Future<void> _verifyOtp() async {
+    if (_otpController.text.isEmpty) {
+      _showToast("Please enter the OTP.");
+      return;
     }
-  }
 
-  void _verifyOTP() async {
     setState(() => _isVerifying = true);
     await Future.delayed(Duration(seconds: 2));
+
     if (_otpController.text == _serverOtp) {
       _login();
     } else {
       _showToast("Invalid OTP! Please try again.");
     }
+
     setState(() => _isVerifying = false);
+  }
+
+  Future<void> _login() async {
+    try {
+      final response =
+          await _mongoService.login(widget.username, widget.password);
+      if (response != null && response['access_token'] != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', response['access_token']);
+        await prefs.setBool('isLoggedIn', true);
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => DashboardScreen()));
+      } else {
+        _showToast("Login failed. Invalid credentials.");
+      }
+    } catch (e) {
+      _showToast("Login error. Try again.");
+      print("Login Error: $e");
+    }
   }
 
   void _showToast(String message) {
@@ -119,27 +119,19 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Column(
-                children: [
-                  Text(
-                    "Enter the OTP sent to:",
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 5),
-                  SelectableText(
-                    widget.email,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.blueAccent,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
+            Text(
+              "Enter the OTP sent to:",
+              style: TextStyle(fontSize: 18, color: Colors.white),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 5),
+            SelectableText(
+              widget.email,
+              style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.blueAccent,
+                  fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
             SizedBox(height: 20),
             TextField(
@@ -151,16 +143,14 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                 labelStyle: TextStyle(color: Colors.white70),
                 border: OutlineInputBorder(),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),
+                    borderSide: BorderSide(color: Colors.white)),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
+                    borderSide: BorderSide(color: Colors.blue)),
               ),
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _isVerifying ? null : _verifyOTP,
+              onPressed: _isVerifying ? null : _verifyOtp,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
@@ -172,7 +162,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
             ),
             SizedBox(height: 10),
             TextButton(
-              onPressed: _isLoading ? null : sendOtp,
+              onPressed: _isLoading ? null : _sendOtp,
               child: _isLoading
                   ? CircularProgressIndicator(color: Colors.white)
                   : Text("Resend OTP", style: TextStyle(color: Colors.blue)),

@@ -17,7 +17,7 @@ class MongoService {
   MongoService._internal();
 
   Future<void> connectToDatabase() async {
-    if (_isDbInitialized) return; // Prevent multiple initializations
+    if (_isDbInitialized) return;
 
     await dotenv.load(fileName: "assets/.env");
     final mongoUri = dotenv.env['MONGO_URI'];
