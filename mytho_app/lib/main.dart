@@ -9,13 +9,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await dotenv.load(fileName: "assets/.env");
-    print("\n\n\n\n");
-    print("DotEnv Loaded Successfully");
-    print("\n\n\n\n");
   } catch (e) {
-    print("\n\n\n\n");
     print("Error loading assets/.env file: $e");
-    print("\n\n\n\n");
   }
   await dotenv.load(fileName: "assets/.env");
   bool isLoggedIn = await checkLoginStatus();
