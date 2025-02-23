@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'mongo_service.dart';
 import 'login.dart';
+import 'novel_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   @override
@@ -38,7 +39,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _fetchBooks() async {
     try {
-      books = await _mongoService.getBooks();
+      List<Map<String, dynamic>> fetchedBooks = await _mongoService.getBooks();
+      setState(() {
+        books = fetchedBooks;
+      });
     } catch (e) {
       print("❌ Fetch error: $e");
     }
@@ -61,80 +65,64 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false,
-      child: Scaffold(
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
         backgroundColor: Colors.black,
-        appBar: AppBar(
-          backgroundColor: Colors.black,
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Welcome, $userName",
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold)),
-              Text(userEmail,
-                  style: TextStyle(color: Colors.grey, fontSize: 14)),
-            ],
+        title:
+            Text("Welcome, $userName", style: TextStyle(color: Colors.white)),
+        actions: [
+          IconButton(
+              icon: Icon(Icons.logout, color: Colors.pinkAccent),
+              onPressed: _logout),
+        ],
+      ),
+      body: FutureBuilder(
+        future: _initFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+                child: CircularProgressIndicator(color: Colors.pinkAccent));
+          }
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(10),
+            child: Column(
+              children: [
+                _buildSearchBar(),
+                _buildSection("Books", books),
+              ],
+            ),
+          );
+        },
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.black,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+            backgroundColor: Colors.black,
           ),
-          actions: [
-            IconButton(
-                icon: Icon(Icons.logout, color: Colors.pinkAccent),
-                onPressed: _logout),
-          ],
-        ),
-        body: FutureBuilder(
-          future: _initFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                  child: CircularProgressIndicator(color: Colors.pinkAccent));
-            }
-            return SingleChildScrollView(
-              padding: EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSearchBar(),
-                  _buildSection("Books", books),
-                ],
-              ),
-            );
-          },
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          backgroundColor: Colors.black,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-              backgroundColor: Colors.black,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.music_note),
-              label: 'Artist',
-              backgroundColor: Colors.black,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.bookmark),
-              label: 'Saved',
-              backgroundColor: Colors.black,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-              backgroundColor: Colors.black,
-            ),
-          ],
-          currentIndex: _selectedIndex,
-          selectedItemColor: Colors.pinkAccent,
-          unselectedItemColor: Colors.white,
-          onTap: _onItemTapped,
-        ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.music_note),
+            label: 'Artist',
+            backgroundColor: Colors.black,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bookmark),
+            label: 'Saved',
+            backgroundColor: Colors.black,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+            backgroundColor: Colors.black,
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.pinkAccent,
+        unselectedItemColor: Colors.white,
+        onTap: _onItemTapped,
       ),
     );
   }
@@ -152,9 +140,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         filled: true,
         fillColor: Colors.grey[900],
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide.none,
-        ),
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none),
       ),
     );
   }
@@ -163,11 +150,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return books.isEmpty
         ? Center(
             child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Text("No books found!",
-                  style: TextStyle(color: Colors.white70, fontSize: 16)),
-            ),
-          )
+                padding: EdgeInsets.all(20),
+                child: Text("No books found!",
+                    style: TextStyle(color: Colors.white70))))
         : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -182,40 +167,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: books.length,
-                  itemBuilder: (context, index) => _buildBookCard(books[index]),
+                  itemBuilder: (context, index) =>
+                      _buildBookCard(books[index], context),
                 ),
               ),
             ],
           );
   }
 
-  Widget _buildBookCard(Map<String, dynamic> book) {
-    return Container(
-      width: 120,
-      margin: EdgeInsets.only(right: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: book["cover_image"]?.isNotEmpty == true
-                ? Image.network(book["cover_image"],
-                    width: 120, height: 150, fit: BoxFit.cover)
-                : Container(
-                    width: 120,
-                    height: 150,
-                    color: Colors.grey[800],
-                    child: Icon(Icons.book, color: Colors.white70, size: 50)),
-          ),
-          SizedBox(height: 5),
-          Text(book["title"] ?? "Unknown",
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold)),
-        ],
+  Widget _buildBookCard(Map<String, dynamic> book, BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        try {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => NovelScreen(
+                book: book, // Ensure novelData is a valid Map<String, dynamic>
+              ),
+            ),
+          );
+        } catch (e) {
+          print("❌ Error fetching chapters: $e");
+        }
+      },
+      child: Container(
+        width: 120,
+        margin: EdgeInsets.only(right: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: book["cover_image"]?.isNotEmpty == true
+                  ? Image.network(book["cover_image"],
+                      width: 120, height: 150, fit: BoxFit.cover)
+                  : Container(
+                      width: 120,
+                      height: 150,
+                      color: Colors.grey[800],
+                      child: Icon(Icons.book, color: Colors.white70, size: 50)),
+            ),
+            SizedBox(height: 5),
+            Text(book["title"] ?? "Unknown",
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: Colors.white)),
+          ],
+        ),
       ),
     );
   }

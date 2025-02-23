@@ -8,14 +8,13 @@ import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await dotenv.load(
-        fileName: "assets/.env"); // Explicitly load the assets/.env file
+    await dotenv.load(fileName: "assets/.env");
     print("\n\n\n\n");
     print("DotEnv Loaded Successfully");
     print("\n\n\n\n");
   } catch (e) {
     print("\n\n\n\n");
-    print("Error loading assets/.env file: $e"); // Debugging output
+    print("Error loading assets/.env file: $e");
     print("\n\n\n\n");
   }
   await dotenv.load(fileName: "assets/.env");
@@ -34,7 +33,7 @@ Future<bool> checkLoginStatus() async {
   try {
     final secretKey = dotenv.env['SECRET_KEY'] ?? 'default-secret-key';
     JWT.verify(token, SecretKey(secretKey));
-    return true; // Token is valid
+    return true;
   } catch (e) {
     await prefs.remove('auth_token');
     await prefs.setBool('isLoggedIn', false);

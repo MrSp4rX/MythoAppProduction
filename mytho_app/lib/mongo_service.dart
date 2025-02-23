@@ -9,11 +9,12 @@ class MongoService {
   late DbCollection usersCollection;
   late DbCollection otpCollection;
   late DbCollection booksCollection;
+  late DbCollection chaptersCollection;
+  late DbCollection reviewsCollection;
   late String secretKey;
   bool _isDbInitialized = false;
 
   factory MongoService() => _instance;
-
   MongoService._internal();
 
   Future<void> connectToDatabase() async {
@@ -35,12 +36,24 @@ class MongoService {
       usersCollection = db.collection('users');
       otpCollection = db.collection('otp');
       booksCollection = db.collection('novels');
+      chaptersCollection = db.collection('chapters');
+      reviewsCollection = db.collection('reviews');
 
       _isDbInitialized = true;
       print("✅ Connected to MongoDB successfully!");
     } catch (e) {
       print("❌ MongoDB Connection Error: $e");
       _isDbInitialized = false;
+    }
+  }
+
+  Future<void> ensureDbConnection() async {
+    if (!_isDbInitialized) {
+      print("🔄 Attempting to reconnect to MongoDB...");
+      await connectToDatabase();
+    } else if (db.state != State.open) {
+      print("🔄 Reopening MongoDB connection...");
+      await db.open();
     }
   }
 
@@ -52,34 +65,27 @@ class MongoService {
     return jwt.sign(SecretKey(secretKey));
   }
 
-  /// Fetches all users from the database
   Future<List<Map<String, dynamic>>> getAllUsers() async {
     await ensureDbConnection();
-
     final users = await usersCollection.find().toList();
-    print("📌 Found ${users.length} users in DB.");
-
-    return users.map((user) {
-      return {
-        "id": user['_id'].toString(),
-        "username": user['username'],
-        "email": user['email'],
-        "phone_number": user['phone_number'],
-        "isVerified": user['isVerified'],
-        "created_at": user['created_at'],
-      };
-    }).toList();
+    return users
+        .map((user) => {
+              "id": user['_id'].toString(),
+              "username": user['username'],
+              "email": user['email'],
+              "phone_number": user['phone_number'],
+              "isVerified": user['isVerified'],
+              "created_at": user['created_at'],
+            })
+        .toList();
   }
 
-  /// Registers a new user
   Future<Map<String, dynamic>?> signup(String username, String email,
       String password, String phoneNumber) async {
     await ensureDbConnection();
-
     final existingUser = await usersCollection.findOne({'username': username});
 
     if (existingUser != null) {
-      print("❌ Signup failed: Username already taken.");
       return {'error': 'Username already taken'};
     }
 
@@ -93,59 +99,37 @@ class MongoService {
     };
 
     await usersCollection.insertOne(newUser);
-    print("✅ User registered successfully: $username");
-
     return {'message': 'User registered successfully'};
   }
 
-  /// Handles user login
   Future<Map<String, dynamic>?> login(String username, String password) async {
     await ensureDbConnection();
-
-    print("📌 Searching for user: $username");
     final user = await usersCollection.findOne(where.eq('username', username));
 
-    if (user == null) {
-      print("❌ Login failed: User not found in DB.");
-      return {'error': 'Invalid credentials'};
-    }
-
-    print("✅ User found: $user");
-
-    if (password != user['password']) {
-      print("❌ Login failed: Incorrect password.");
+    if (user == null || password != user['password']) {
       return {'error': 'Invalid credentials'};
     }
 
     final token = generateToken(user['_id'].toString());
-    print("✅ Login successful! Token generated.");
-
     return {'access_token': token, 'token_type': 'bearer'};
   }
 
-  /// Sends OTP and stores it in MongoDB
   Future<void> sendOtp(String email) async {
     await ensureDbConnection();
-
     String generatedOtp = _generateOtp();
     await otpCollection.insertOne({
       'email': email,
       'otp': generatedOtp,
       'expires_at': DateTime.now().add(Duration(minutes: 5)).toIso8601String(),
     });
-
-    print("\n\nOTP Sent: $generatedOtp\n\n");
   }
 
-  /// Fetches all books from the database
   Future<List<Map<String, dynamic>>> getBooks() async {
     await ensureDbConnection();
-
     final books = await booksCollection.find().toList();
-    print("📚 Found ${books.length} books in DB.");
-
     return books
         .map((book) => {
+              '_id': book['_id'].toString(),
               'title': book['title'],
               'author': book['author'],
               'description': book['description'],
@@ -160,18 +144,112 @@ class MongoService {
         .toList();
   }
 
-  /// Ensures the database is connected before executing queries
-  Future<void> ensureDbConnection() async {
-    if (!_isDbInitialized) {
-      print("🔄 Attempting to reconnect to MongoDB...");
-      await connectToDatabase();
-    } else if (db.state != State.open) {
-      print("🔄 Reopening MongoDB connection...");
-      await db.open();
+  Future<List<Map<String, dynamic>>> getChapters(String novelId) async {
+    await ensureDbConnection();
+    try {
+      final chapters = await chaptersCollection
+          .find(where.eq('novel_id', ObjectId.parse(novelId)))
+          .toList();
+      return chapters
+          .map((chapter) => {
+                '_id': chapter['_id'].toString(),
+                'novel_id': chapter['novel_id'].toString(),
+                'chapter_number': chapter['chapter_number'],
+                'title': chapter['title'],
+                'content': chapter['content'],
+                'word_count': chapter['word_count'],
+                'published_at': chapter['published_at']
+              })
+          .toList();
+    } catch (e) {
+      print("❌ Error fetching chapters: $e");
+      return [];
     }
   }
 
-  /// Generates a random 6-digit OTP
+  Future<void> addReview(
+      String novelId, String reviewText, double rating) async {
+    try {
+      await reviewsCollection.insertOne({
+        "novel_id": novelId,
+        "user_id": "",
+        "rating": rating.toString(),
+        "review_text": reviewText,
+        "created_at": DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      print("❌ Error adding review: $e");
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getReviewsByNovelId(String novelId) async {
+    try {
+      final reviews =
+          await reviewsCollection.find({"novel_id": novelId}).toList();
+
+      return reviews
+          .map((review) => {
+                "_id": review["_id"].toString(),
+                "user_id": review["user_id"] ?? "",
+                "novel_id": review["novel_id"] ?? "",
+                "rating": review["rating"] ?? "0.0",
+                "review_text": review["review_text"] ?? "",
+                "created_at": review["created_at"] ?? "",
+              })
+          .toList();
+    } catch (e) {
+      print("❌ Error fetching reviews: $e");
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getChaptersByNovelId(
+      String novelId) async {
+    try {
+      novelId = novelId.substring(10, novelId.length - 2);
+      print(novelId);
+      ObjectId objectId = ObjectId.parse(novelId);
+      print(objectId);
+      return await db
+          .collection('chapters')
+          .find({'novel_id': objectId}).toList();
+    } catch (e) {
+      print("❌ Error fetching chapters: $e");
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>?> getChapterById(String chapterId) async {
+    await ensureDbConnection();
+
+    try {
+      chapterId = chapterId.substring(10, chapterId.length - 2);
+      ObjectId objectId = ObjectId.parse(chapterId);
+      var chapter =
+          await db.collection('chapters').findOne({'novel_id': objectId});
+      var documents = await db.collection('chapters').find().toList();
+
+      print(documents);
+      print(chapter);
+
+      if (chapter == null) {
+        print("❌ Error: Chapter not found in MongoDB!");
+        return null;
+      }
+
+      return {
+        'id': chapter['_id'],
+        'chapter_number': chapter['chapter_number'],
+        'title': chapter['title'],
+        'content': chapter['content'],
+        'word_count': chapter['word_count'],
+      };
+    } catch (e) {
+      print("❌ Error fetching chapter by ID: $e");
+      return null;
+    }
+  }
+
   String _generateOtp() {
     final Random random = Random();
     return (100000 + random.nextInt(900000)).toString();
