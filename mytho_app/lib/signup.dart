@@ -100,33 +100,21 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
             ),
             const SizedBox(height: 20.0),
-
-            // Username
             _buildTextField(_nameController, "Username", TextInputType.text,
                 false, TextInputAction.next),
             const SizedBox(height: 12.0),
-
-            // Email
             _buildTextField(_emailController, "Email ID",
                 TextInputType.emailAddress, false, TextInputAction.next),
             const SizedBox(height: 12.0),
-
-            // Phone Number
             _buildTextField(_phoneNumberController, "Phone Number",
                 TextInputType.phone, false, TextInputAction.next),
             const SizedBox(height: 12.0),
-
-            // Password
             _buildTextField(_passwordController, "Password",
                 TextInputType.visiblePassword, true, TextInputAction.next),
             const SizedBox(height: 12.0),
-
-            // Confirm Password
             _buildTextField(_confirmPasswordController, "Confirm Password",
                 TextInputType.visiblePassword, true, TextInputAction.done),
             const SizedBox(height: 20.0),
-
-            // Sign Up Button
             _isLoading
                 ? const CircularProgressIndicator(color: Colors.blue)
                 : SizedBox(
@@ -145,8 +133,6 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
             const SizedBox(height: 10.0),
-
-            // Already have an account? Login
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

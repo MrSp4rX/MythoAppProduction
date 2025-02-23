@@ -168,15 +168,16 @@ class MongoService {
   }
 
   Future<void> addReview(
-      String novelId, String reviewText, double rating) async {
+      String novelId, String userId, String reviewText, double rating) async {
     try {
       await reviewsCollection.insertOne({
         "novel_id": novelId,
-        "user_id": "",
-        "rating": rating.toString(),
+        "user_id": userId,
+        "rating": rating,
         "review_text": reviewText,
         "created_at": DateTime.now().toIso8601String(),
       });
+      print("✅ Review added successfully!");
     } catch (e) {
       print("❌ Error adding review: $e");
     }

@@ -45,7 +45,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       });
 
       if (result.isSuccess) {
-        print("Generated OTP: $generatedOtp"); // Remove in production
+        print("Generated OTP: $generatedOtp");
         setState(() => _serverOtp = generatedOtp);
         _showToast("OTP sent successfully!");
       } else {

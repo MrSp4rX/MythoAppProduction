@@ -15,7 +15,7 @@ class _NovelScreenState extends State<NovelScreen> {
   final TextEditingController _reviewController = TextEditingController();
   List<Map<String, dynamic>> reviews = [];
   double _selectedRating = 3.0;
-  bool isLoading = true; // FIX: Prevents UI from rendering before data is ready
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -23,14 +23,32 @@ class _NovelScreenState extends State<NovelScreen> {
     _fetchReviews();
   }
 
+  String _timeAgo(String timestamp) {
+    DateTime reviewTime = DateTime.parse(timestamp);
+    Duration difference = DateTime.now().difference(reviewTime);
+
+    if (difference.inMinutes < 1) {
+      return "Just now";
+    } else if (difference.inMinutes < 60) {
+      return "${difference.inMinutes} minutes ago";
+    } else if (difference.inHours < 24) {
+      return "${difference.inHours} hours ago";
+    } else if (difference.inDays < 30) {
+      return "${difference.inDays} days ago";
+    } else {
+      return "${(difference.inDays / 30).floor()} months ago";
+    }
+  }
+
   Future<void> _fetchReviews() async {
     try {
-      String novelId = widget.book['_id']['\$oid'];
+      String novelId = widget.book['_id'];
       List<Map<String, dynamic>> fetchedReviews =
           await _mongoService.getReviewsByNovelId(novelId);
       setState(() {
         reviews = fetchedReviews;
-        isLoading = false; // FIX: Ensure UI updates only after data is ready
+        print(reviews);
+        isLoading = false;
       });
     } catch (e) {
       print("❌ Error fetching reviews: $e");
@@ -41,18 +59,34 @@ class _NovelScreenState extends State<NovelScreen> {
   }
 
   Future<void> _submitReview() async {
-    if (_reviewController.text.isEmpty) return;
+    if (_reviewController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("⚠️ Review cannot be empty!")),
+      );
+      return;
+    }
+    String novelId = widget.book['_id'];
+    String userId = "some_user_id";
+
     try {
-      String novelId = widget.book['_id']['\$oid'];
       await _mongoService.addReview(
-          novelId, _reviewController.text, _selectedRating);
+          novelId, userId, _reviewController.text, _selectedRating);
+
       _reviewController.clear();
       setState(() {
         _selectedRating = 3.0;
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("✅ Review added successfully!")),
+      );
+
       _fetchReviews();
     } catch (e) {
       print("❌ Error submitting review: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("❌ Failed to add review.")),
+      );
     }
   }
 
@@ -70,8 +104,7 @@ class _NovelScreenState extends State<NovelScreen> {
       ),
       body: SafeArea(
         child: isLoading
-            ? Center(
-                child: CircularProgressIndicator()) // FIX: Show loading state
+            ? Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
                 padding: EdgeInsets.all(16),
                 child: Column(
@@ -112,7 +145,6 @@ class _NovelScreenState extends State<NovelScreen> {
                             TextStyle(fontSize: 16, color: Colors.grey[500])),
                     SizedBox(height: 20),
                     Divider(color: Colors.grey[700]),
-
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -140,40 +172,81 @@ class _NovelScreenState extends State<NovelScreen> {
                         style: TextStyle(color: Colors.white)),
                     SizedBox(height: 20),
                     Divider(color: Colors.grey[700]),
-
                     Text("Reviews",
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.white)),
-
-                    /// FIX: Wrapping `ListView.builder` in a `SizedBox`
-                    SizedBox(
-                      height: reviews.isEmpty ? 50 : 200, // Adjust height
-                      child: reviews.isEmpty
-                          ? Center(
-                              child: Text("No reviews yet.",
-                                  style: TextStyle(color: Colors.grey)),
-                            )
-                          : ListView.builder(
-                              shrinkWrap: true,
-                              physics: AlwaysScrollableScrollPhysics(),
-                              itemCount: reviews.length,
-                              itemBuilder: (context, index) {
-                                return ListTile(
-                                  title: Text(
-                                      reviews[index]['review_text'] ?? "",
-                                      style: TextStyle(color: Colors.white)),
-                                  subtitle: Text(
-                                      "⭐ ${reviews[index]['rating'] ?? 'N/A'}",
-                                      style: TextStyle(color: Colors.grey)),
-                                );
-                              },
-                            ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (reviews.isEmpty)
+                          Center(
+                            child: Text("No reviews yet.",
+                                style: TextStyle(color: Colors.grey)),
+                          )
+                        else
+                          ...reviews.map((review) {
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 12.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      CircleAvatar(
+                                        backgroundColor: Colors.grey[800],
+                                        child: Icon(Icons.person,
+                                            color: Colors.white),
+                                      ),
+                                      SizedBox(width: 10),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            review['user_id'] ?? "Anonymous",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          Text(
+                                            _timeAgo(review['created_at']),
+                                            style: TextStyle(
+                                                color: Colors.grey,
+                                                fontSize: 12),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 6),
+                                  Row(
+                                    children: List.generate(5, (index) {
+                                      return Icon(
+                                        index < (review['rating'] ?? 0)
+                                            ? Icons.star
+                                            : Icons.star_border,
+                                        color: Colors.amber,
+                                        size: 16,
+                                      );
+                                    }),
+                                  ),
+                                  SizedBox(height: 6),
+                                  Text(
+                                    review['review_text'] ?? "",
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 16),
+                                  ),
+                                  Divider(color: Colors.grey[700]),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                      ],
                     ),
                     SizedBox(height: 10),
-
-                    // Star rating system
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(5, (index) {
@@ -192,8 +265,6 @@ class _NovelScreenState extends State<NovelScreen> {
                         );
                       }),
                     ),
-
-                    // Review input field
                     TextField(
                       controller: _reviewController,
                       style: TextStyle(color: Colors.white),
@@ -201,24 +272,13 @@ class _NovelScreenState extends State<NovelScreen> {
                         hintText: "Write a review...",
                         hintStyle: TextStyle(color: Colors.grey),
                         border: OutlineInputBorder(),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
-                        ),
                       ),
                     ),
                     SizedBox(height: 10),
-
-                    // Submit button
                     Center(
                       child: ElevatedButton(
                         onPressed: _submitReview,
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey[800]),
-                        child: Text("Submit",
-                            style: TextStyle(color: Colors.white)),
+                        child: Text("Submit"),
                       ),
                     )
                   ],

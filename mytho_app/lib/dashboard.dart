@@ -68,6 +68,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.black,
         title:
             Text("Welcome, $userName", style: TextStyle(color: Colors.white)),
@@ -183,7 +184,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             context,
             MaterialPageRoute(
               builder: (context) => NovelScreen(
-                book: book, // Ensure novelData is a valid Map<String, dynamic>
+                book: book,
               ),
             ),
           );
