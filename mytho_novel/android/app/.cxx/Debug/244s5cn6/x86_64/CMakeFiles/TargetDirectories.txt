@@ -1,0 +1,2 @@
+C:/Users/Mr SparX/Desktop/MythoNovel Prod/mytho_novel/android/app/.cxx/Debug/244s5cn6/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/Mr SparX/Desktop/MythoNovel Prod/mytho_novel/android/app/.cxx/Debug/244s5cn6/x86_64/CMakeFiles/rebuild_cache.dir

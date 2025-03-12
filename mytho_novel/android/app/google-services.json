@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "270709673571",
+    "project_id": "mytho-novel",
+    "storage_bucket": "mytho-novel.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:270709673571:android:79e3aea6fb47e64e4eb256",
+        "android_client_info": {
+          "package_name": "com.mytho.novel"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "270709673571-f4f0eiifp4kujje94qbmj6uksut5bs9d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBYxmHtQl3PI-HvB_4hYgIjB1J4PJC_6TU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "270709673571-f4f0eiifp4kujje94qbmj6uksut5bs9d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
