@@ -16,7 +16,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'  # Compatible with Dart 3.6.2
+          flutter-version: '3.32.8'  # Compatible with Dart 3.6.2
 
       - name: Check Dart version
         run: dart --version
