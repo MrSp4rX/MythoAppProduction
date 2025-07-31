@@ -16,19 +16,19 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
+          flutter-version: '3.22.0'  # Compatible with Dart 3.6.2
 
       - name: Check Dart version
         run: dart --version
 
-      - name: Navigate into the Flutter project
+      - name: Install dependencies & build APK
         working-directory: mytho_novel
         run: |
           flutter pub get
           flutter build apk --release
 
       - name: Upload APK Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: release-apk
           path: mytho_novel/build/app/outputs/flutter-apk/app-release.apk
